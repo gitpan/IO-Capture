@@ -12,6 +12,7 @@ sub _retrieve_captured_text {
     my $messages = \@{$self->{'IO::Capture::messages'}};
 
      @$messages = <STDERR>;
+	return 1;
 }
 
 sub _check_pre_conditions {
@@ -38,6 +39,7 @@ C<IO::Capture::Stderr> - Capture all output sent to C<STDERR>
 
 =head1 SYNOPSYS
 
+    # Generic example (Just to give the overall view)
     use IO::Capture::Stderr;
 
     $capture = IO::Capture::Stderr->new();
@@ -67,6 +69,36 @@ C<IO::Capture::Stderr> - Capture all output sent to C<STDERR>
     # In 'List Context' return an array(list)
     @all_lines = $capture->read;
 
+    # More useful example 1 - "Using in module tests"
+    #  Note: If you don't want to make users install 
+    #        the IO::Capture module just for your tests,
+    #        you can just install in the t/lib directory
+    #        of your module and use the lib pragma in  
+    #        your tests. 
+
+    use lib "t/lib";
+    use IO::Capture:ErrorMessages;
+
+    use Test::More;
+
+    my $capture =  IO::Capture:ErrorMessages->new;
+    $capture->start
+
+    # execute with a bad parameter to make sure get
+    # an error.
+
+    ok( ! $test("Bad Parameter") );
+
+    $capture->stop();
+
+    # More useful example 2 - "Use with GUI like Tk"
+    #   If you are calling a CPAN module that may
+    # print some messages that you don't want going
+    # to the shell window, or being lost, you can 
+    # capture them and then put to a log file or
+    # print in a text frame
+
+    
 
 =head1 DESCRIPTION
 
@@ -75,6 +107,12 @@ See L<IO::Capture>. The purpose of the module (as the name suggests) is to captu
 any output sent to C<STDOUT>.  After the capture is stopped, the STDOUT filehandle 
 will be reset to the previous location. E.g., If previously redirected to a file, when 
 C<IO::Capture-E<gt>stop> is called, output will start going into that file again.
+
+Note:  This module won't work with the perl function, system(), or any other operation 
+       involing a fork().  If you want to capture the output from a system command,
+       it is faster to use open() or backticks.  
+
+       my $output = `/usr/sbin/ls -l 2>&1`;
 
 =head1 METHODS
 

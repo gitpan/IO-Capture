@@ -1,6 +1,6 @@
 package IO::Capture;
 
-$VERSION = 0.01;
+$VERSION = 0.02;
 use strict;
 use Carp;
 
@@ -13,12 +13,12 @@ C<IO::Capture> - Abstract Base Class to build modules to capture output.
 The C<IO::Capture> Module defines an abstract base class that can be
 used to build modules that capture output being sent on a filehandle 
 such as STDOUT or STDERR.
-  Several modules come with the distribution that define sub-classes 
-of C<IO::Capture> to do just that.  (I.e., Capture STDOUT and STDERR)  
-See L<IO::Capture::Overview> for a discussion of these modules 
-and examples of how to build a module to sub-class from C<IO::Capture> 
-yourself.   If after reading the overview, you would like to build a 
-class from C<IO::Capture>, look here for details on the internals.
+  Several modules that come with the distribution, do just that.  
+(I.e., Capture STDOUT and STDERR)  See L<IO::Capture::Overview> for a 
+discussion of these modules and examples of how to build a module to 
+sub-class from C<IO::Capture> yourself.   If after reading the overview, 
+you would like to build a class from C<IO::Capture>, look here for 
+details on the internals.
 
 =head1 METHODS
 
@@ -105,24 +105,12 @@ C<STDERR>, C<STDOUT>, and $SIG{__WARN__}.  They are saved in the hash
 keys 'IO::Capture::stderr_save', 'IO::Capture::stdout_save', and 
 'IO::Capture::handler_save'. 
 
-    # Save WARN handler
     $self->{'IO::Capture::handler_save'} = $SIG{__WARN__};
-    # Dup stdout
-    open STDOUT_SAVE, ">&STDOUT";
-    # Save ref to dup
-    $self->{'IO::Capture::stdout_save'} = *STDOUT_SAVE;
-    # Dup stderr
-    open STDERR_SAVE, ">&STDOUT";
-    # Save ref to dup
-    $self->{'IO::Capture::stderr_save'} = *STDERR_SAVE;
-
+    $self->{'IO::Capture::stdout_save'} = *STDOUT;
+    $self->{'IO::Capture::stderr_save'} = *STDERR;
 
 These saved values can be used in the C<_stop> method to restore the
-original value to any you changed.  
-    
-    $SIG{__WARN__} = $self->{'IO::Capture::handler_save'};
-    STDOUT = $self->{'IO::Capture::stdout_save'};
-    STDERR = $self->{'IO::Capture::stderr_save'};
+original value to any you changed.  See C<_stop> for examples.
 
 B<Must> return a boolean true for success, or false for failure.  
 If a failure is indicated, an C<undef> will be returned to the
@@ -150,9 +138,9 @@ calling function.
 =head2 stop
 
 Stop capturing and return any filehandles and interrupt handlers that were 
-changed.  This B<must> be called B<before> calling C<read()>.  If you are
-looking for a way to interact with the process on the other side of the 
-filehandle, take a look at the L<"Other Modules on CPAN">.  
+changed, to their pre-start state.  This B<must> be called B<before> calling 
+C<read()>.  If you are looking for a way to interact with the process on 
+the other side of the filehandle, take a look at the L<"Other Modules on CPAN">.  
 
 B<Must> return a boolean true for success, or false for failure.  
 If a failure is indicated, an C<undef> will be returned to the
@@ -309,8 +297,6 @@ sub start {
 
 sub stop {
     my $self = shift;
-    my $rv = 1;
-    my $retrieve_error = 0;
 
     if( $self->{'IO::Capture::status'} ne "Busy") {
 		carp "Stop issued on an unstarted capture ". ref($self);
@@ -318,22 +304,18 @@ sub stop {
 	}
 
     if (! $self->_retrieve_captured_text() ) {
-		$retrieve_error = 1;
+        carp "Error retreaving captured text in " . ref($self);
+		return;
     }
 
     if (!$self->_stop() ) {
 		carp "Error return from _stop() " . ref($self) . "\n";
-		$rv = 0;
-    }
-
-    if ($retrieve_error) {
-        carp "Error retreaving captured text in " . ref($self);
-		$rv = 0;
+		return;
     }
 
     $self->{'IO::Capture::status'} = "Ready";
 
-    $rv;
+	return 1;
 }
 
 sub read {
@@ -362,7 +344,8 @@ sub _read {
 	}
 
     return if $$line_pointer > @$messages;
-    return wantarray ? @$messages :  $messages->[($$line_pointer++)-1];
+    #return wantarray ? @$messages :  shift @{$messages};
+	return wantarray ? @$messages :  $messages->[($$line_pointer++)-1];
 }
 
 sub _retrieve_captured_text {
@@ -373,10 +356,8 @@ sub _retrieve_captured_text {
 sub _save_current_configuration {
     my $self = shift;
     $self->{'IO::Capture::handler_save'} = $SIG{__WARN__};
-    open STDOUT_SAVE, ">&STDOUT";
-    $self->{'IO::Capture::stdout_save'} = *STDOUT_SAVE;
-    open STDERR_SAVE, ">&STDOUT";
-    $self->{'IO::Capture::stderr_save'} = *STDERR_SAVE;
+    $self->{'IO::Capture::stdout_save'} = *STDOUT;
+    $self->{'IO::Capture::stderr_save'} = *STDERR;
     return $self; 
 }
 

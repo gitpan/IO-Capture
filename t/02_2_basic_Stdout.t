@@ -56,8 +56,8 @@ diag "*"x60 . "\n3rd line read was: $line3\n" . "*"x60 . "\n\n" unless $results_
 
 #Test 8
 $capture->line_pointer(1);
-my $new_line = $capture->line_pointer;
-ok($new_line == 1, "Check set line_pointer");
+my $new_line_pointer = $capture->line_pointer;
+ok($new_line_pointer == 1, "Check set line_pointer");
 
 #Test 9
 my $line1_2 = $capture->read();

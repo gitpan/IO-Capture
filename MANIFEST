@@ -23,3 +23,4 @@ t/04_1_Side-effects_base.t
 t/04_2_Side-effects_Stdout.t
 t/04_3_Side-effects_Stderr.t
 t/04_4_Side-effects_ErrorMessages.t
+t/05_2_regression.t

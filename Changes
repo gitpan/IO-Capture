@@ -3,3 +3,7 @@ Revision history for Perl extension Capture.
 0.01  Wed Mar 12 15:11:37 2003
         - original version; created by h2xs 1.1
 
+0.02 Sat Dec 20 08:23:00 EST 2003
+	- Fixed bug that caused messages to be printed if nothing was captured.  
+	  Thanks to Robb Canfield.
+	- Some changes to documentation

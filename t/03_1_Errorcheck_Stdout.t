@@ -39,4 +39,4 @@ $capture3->stop();
 ok(!$capture3->stop(), "Two Stops");
 
 # restore STDERR
-#close STDERR; open STDERR, ">&STDERR_SAV"; close STDERR_SAV;
+close STDERR; open STDERR, ">&STDERR_SAV"; close STDERR_SAV;

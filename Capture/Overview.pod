@@ -1,4 +1,4 @@
-$VERSION = 0.01;
+$VERSION = 0.02;
 
 =head1 NAME
 
@@ -6,13 +6,28 @@ Overview of C<IO::Capture> Module, and classes derived from it.
 
 =head1 DESCRIPTION
 
-The C<IO::Capture> module is an abstract class designed to allow you to
-easily create your own class to capture and process output from 
-STDOUT and or STDERR.  It can be used to capture output from a 
-system command, perl script, or maybe a test you built developing 
-your own module.
+The modules in this distribution are designed to allow you to
+capture and process output sent to STDOUT and/or STDERR.  
 
-It is a small, lightweight module.  Instead of designing in a lot of
+I initially created the modules to use in building module tests.  I 
+wanted to be able to intentionally cause errors, and insure the 
+module responded correctly.  E.g., Call a class method without a 
+required argument.  Using IO::Capture keeps the user from seeing 
+these intentional errors when running 'make test'.
+
+I have also found useful on occasion in Perl Tk apps, where I wanted
+to capture output from a Perl module I was using.  I could then 
+capture, then put the text into a log or message window.
+
+Note:  None of the modules currently distributed will capture from
+the 'system' Perl function, or the like.  It could be done, but 
+generally, if you would like to capture from a system command,
+you don't need this module, just use the backticks operators.
+
+	my $output = '/usr/bin/ls';
+
+
+They are small, lightweight modules.  Instead of designing in a lot of
 features, we designed it to be easily reusable and adaptable.
 A module can be quickly built, that incorporates custom methods, but
 reuses all existing features of one of the derived classes. See the 
@@ -42,10 +57,10 @@ own module using C<IO::Capture> as a base, read on.
 
 =head1 ADDING FEATURES 
 
-If one of these modules takes care of your problem, install it and
+If one of these modules take care of your problem, install it and
 have fun!  
 
-But let's say you would like to add a feature to one of the derived classes, 
+But lets say you would like to add a feature to one of the derived classes, 
 say IO::Capture::Stdout.  No need to re-write the whole module, just use it
 as the base, and write your one feature. Here is a somewhat simplified 
 example.
@@ -102,7 +117,7 @@ Results in
 =head1 WRITING YOUR OWN DERIVED CLASS
 
 Before starting your own sub-class, be sure to read through L<IO::Capture>.  Pay 
-special attention to the internal methods that are only defined as I<abstract> 
+special attention to the internal methods that are only defined as abstract 
 methods in C<IO::Capture>.  For examples, look at the sub-classes included with 
 this distribution. (C<IO::Capture::Stdout>, C<IO:Capture::Stderr>, 
 C<IO:Capture::ErrorMessages>)  You can start by copying one of these and using 
@@ -149,12 +164,14 @@ For example, here is a commented copy of C<IO::Capture::Stderr>.
 
     sub _stop {
         untie *STDERR;
+		return 1;
     }
     1;
 
 Lets say you don't want to capture B<all> the text.  You just want to 
 grab the lines that have the word "Error" in them.  The only thing you 
 need to change is _retrieve_captured_text. (Besides the package name) 
+
 Something like:
 
     sub _retrieve_captured_text {
@@ -174,10 +191,12 @@ needed an easy example.  :-)
 =head1 AUTHORS
 
 Mark Reynolds
-reynolds@sgi.com
+reynolds<at>sgi.com
 
 Jon Morgan
-jmorgan@sgi.com
+jmorgan<at>sgi.com
+
+Note: C<Change <at> to 'at' sign.>
 
 =head1 COPYRIGHT
 

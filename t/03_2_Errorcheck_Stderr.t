@@ -3,7 +3,8 @@ use Test::More tests => 4;
 BEGIN { use_ok('IO::Capture::Stderr') };
 
 # These will generate some warnings -> preventing from printing
-open STDERR_SAV, ">&STDERR"; open STDERR, ">/dev/null";
+#open STDERR_SAV, ">&STDERR" 
+open STDERR, ">/dev/null";
 
 #Test 2
 # Now test creating two captures of the same type and starting both
