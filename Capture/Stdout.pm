@@ -4,6 +4,8 @@ use base qw/IO::Capture/;
 use IO::Capture::Tie_STDx;
 
 sub _start {
+	my $self = shift;
+	$self->line_pointer(1);
     tie *STDOUT, "IO::Capture::Tie_STDx";
 }
 
@@ -12,6 +14,7 @@ sub _retrieve_captured_text {
     my $messages = \@{$self->{'IO::Capture::messages'}};
 
     @$messages = <STDOUT>;
+	#$self->line_pointer(1);
 	return 1;
 }
 
@@ -76,11 +79,11 @@ IO::Capture::Stdout - Capture any output sent to STDOUT
     #        your tests. 
 
     use lib "t/lib";
-    use IO::Capture:ErrorMessages;
+    use IO::Capture::Stdout;
 
     use Test::More;
 
-    my $capture =  IO::Capture:ErrorMessages->new;
+    my $capture =  IO::Capture::Stdout->new;
     $capture->start
 
     # execute with a bad parameter to make sure get

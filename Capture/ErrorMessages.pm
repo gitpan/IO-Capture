@@ -4,6 +4,8 @@ use base qw/IO::Capture/;
 use IO::Capture::Tie_STDx;
 
 sub _start {
+	my $self = shift;
+	$self->line_pointer(1);
     $SIG{__WARN__} = sub {print STDERR @_;};
     tie *STDERR, "IO::Capture::Tie_STDx";
 }
@@ -77,11 +79,11 @@ C<IO::Capture::ErrorMessages> - Capture output from C<STDERR> and C<warn()>
     #        your tests. 
 
     use lib "t/lib";
-    use IO::Capture:ErrorMessages;
+    use IO::Capture::ErrorMessages;
 
     use Test::More;
 
-    my $capture =  IO::Capture:ErrorMessages->new;
+    my $capture =  IO::Capture::ErrorMessages->new;
     $capture->start
 
     # execute with a bad parameter to make sure get

@@ -4,6 +4,8 @@ use base qw/IO::Capture/;
 use IO::Capture::Tie_STDx;
 
 sub _start {
+	my $self = shift;
+	$self->line_pointer(1);
     tie *STDERR, "IO::Capture::Tie_STDx";
 }
 

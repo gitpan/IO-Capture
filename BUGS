@@ -1,0 +1,10 @@
+Bug list for IO::Capture
+
+1) Complains to STDERR if nothing captured  
+	Thanks to Robb Canfield for the report  
+	Fixed in 0.02
+2) Documentation error  
+	Thanks to Mike Castle  
+	Fixed in .03
+3) Line pointer wrong if read() is called in scalar context, 
+   then called a 2nd time in scalar.
