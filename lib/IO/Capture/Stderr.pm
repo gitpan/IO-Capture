@@ -1,4 +1,6 @@
 package IO::Capture::Stderr;
+use strict;
+use warnings;
 use Carp;
 use base qw/IO::Capture/;
 use IO::Capture::Tie_STDx;
@@ -6,6 +8,14 @@ use IO::Capture::Tie_STDx;
 sub _start {
 	my $self = shift;
 	$self->line_pointer(1);
+
+	if ( _capture_warn_check() ) {
+		$self->{'IO::Capture::handler_save'} = defined $SIG{__WARN__} ? $SIG{__WARN__} : 'DEFAULT';
+		$SIG{__WARN__} = sub {print STDERR @_;};
+	}
+	else {
+		$self->{'IO::Capture::handler_save'} = undef;
+	}
     tie *STDERR, "IO::Capture::Tie_STDx";
 }
 
@@ -30,18 +40,77 @@ sub _check_pre_conditions {
 }
 
 sub _stop {
+	my $self = shift;
     untie *STDERR;
+	$SIG{__WARN__} = $self->{'IO::Capture::handler_save'} if defined $self->{'IO::Capture::handler_save'};
     return 1;
 }
+
+#  _capture_warn_check
+#
+#  Check to see if SIG{__WARN__} handler should be set to direct output
+# from warn() to IO::Capture::Stderr.  
+#   There are three things to take into consideration.  
+#   
+#   1) Is the version of perl less than 5.8?
+#      - Before 5.8, there was a bug that caused output from warn() 
+#        not to be sent to STDERR if it (STDERR) was tied.
+#        So, we need to put a handler in to send warn() text to
+#        STDERR so IO::Capture::Stderr will capture it.
+#   2) Is there a handler set already?
+#      - The default handler for SIG{__WARN__} is to send to STDERR.
+#        But, if it is set by the program, it may do otherwise, and
+#        we don't want to break that. 
+#   3)  FORCE_CAPTURE_WARN => 1
+#      - To allow users to override a previous handler that was set on
+#        SIG{__WARN__}, there is a variable that can be set.  If set,
+#        when there is a handler set on IO::Capture::Stderr startup,
+#        it will be saved and a new hander set that captures output to
+#        IO::Capture::Stderr.  On stop, it will restore the programs
+#        handler.
+#      
+#
+#                    
+#    Perl   |  FORCE_CAPTURE_WARN  |  Program has   | Set our own
+#    < 5.8  |  is set              |  handler set   | handler
+#   --------+----------------------+----------------+------------
+#           |                      |                |
+#   --------+----------------------+----------------+------------
+#      X    |                      |                |     X (1)
+#   --------+----------------------+----------------+------------
+#           |          X           |                |
+#   --------+----------------------+----------------+------------
+#      X    |          X           |                |     X (1)
+#   --------+----------------------+----------------+------------
+#           |                      |        X       |
+#   --------+----------------------+----------------+------------
+#      X    |                      |        X       |
+#   --------+----------------------+----------------+------------
+#           |          X           |        X       |     X (2)
+#   --------+----------------------+----------------+------------
+#      X    |          X           |        X       |     X (2)
+#   --------+----------------------+----------------+------------
+#     (1) WAR to get around bug
+#     (2) Replace programs handler with our own
+
+sub _capture_warn_check {
+	my $self = shift;
+
+	if (defined $SIG{__WARN__} ) {
+		return $^V lt v5.8 ? 1 : 0;
+	}
+	return $self->{'FORCE_CAPTURE_WARN'} ? 1 : 0;
+}
 1;
+
+__END__
 
 =head1 NAME
 
 C<IO::Capture::Stderr> - Capture all output sent to C<STDERR>
 
-=head1 SYNOPSYS
+=head1 SYNOPSIS
 
-    # Generic example (Just to give the overall view)
     use IO::Capture::Stderr;
 
     $capture = IO::Capture::Stderr->new();
@@ -71,7 +140,7 @@ C<IO::Capture::Stderr> - Capture all output sent to C<STDERR>
     # In 'List Context' return an array(list)
     @all_lines = $capture->read;
 
-    # More useful example 1 - "Using in module tests"
+    # Example 1 - "Using in module tests"
     #  Note: If you don't want to make users install 
     #        the IO::Capture module just for your tests,
     #        you can just install in the t/lib directory
@@ -79,11 +148,14 @@ C<IO::Capture::Stderr> - Capture all output sent to C<STDERR>
     #        your tests. 
 
     use lib "t/lib";
-    use IO::Capture:ErrorMessages;
+    use IO::Capture:Stderr;
 
     use Test::More;
 
-    my $capture =  IO::Capture:ErrorMessages->new;
+	# Create new capture object.  Showing FORCE_CAPTURE_WARN being cleared
+	# for example, but 0 is the default, so you don't need to specify
+	# unless you want to set.
+    my $capture =  IO::Capture:Stderr->new( {FORCE_CAPTURE_WARN => 0} );
     $capture->start
 
     # execute with a bad parameter to make sure get
@@ -92,13 +164,6 @@ C<IO::Capture::Stderr> - Capture all output sent to C<STDERR>
     ok( ! $test("Bad Parameter") );
 
     $capture->stop();
-
-    # More useful example 2 - "Use with GUI like Tk"
-    #   If you are calling a CPAN module that may
-    # print some messages that you don't want going
-    # to the shell window, or being lost, you can 
-    # capture them and then put to a log file or
-    # print in a text frame
 
     
 
@@ -111,8 +176,8 @@ will be reset to the previous location. E.g., If previously redirected to a file
 C<IO::Capture-E<gt>stop> is called, output will start going into that file again.
 
 Note:  This module won't work with the perl function, system(), or any other operation 
-       involing a fork().  If you want to capture the output from a system command,
-       it is faster to use open() or backticks.  
+       involving a fork().  If you want to capture the output from a system command,
+       it is faster to use open() or back-ticks.  
 
        my $output = `/usr/sbin/ls -l 2>&1`;
 
@@ -232,6 +297,25 @@ Reads or sets the C<line_pointer>.
 
 =back
 
+=head1 ARGUMENTS
+
+Pass any arguments to new() in a single array reference.
+
+   IO::Capture::Stderr->new( {FORCE_CAPTURE_WARN => 1} );
+
+=head2 FORCE_CAPTURE_WARN
+
+=over 4
+
+
+Normally, IO::Capture::Stderr will capture text from I<warn()> function calls. This is because output
+from I<warn()> is normally directed to STDERR.  If you wish to force IO::Capture::Stderr to grab the
+text from I<warn()>, set FORCE_CAPTURE_WARN to a 1.  Then C<IO::Capture::Stderr> will save the handle
+that C<$SIG{__WARN__}> was set to, redirect it to itself on C<start()>, and then set C<$SIG{__WARN__}> 
+back after C<stop()> is called.
+
+=back
+
 =head1 SUB-CLASSING
 
 =head2 Adding Features
@@ -278,8 +362,6 @@ L<IO::Capture::Overview>
 L<IO::Capture>
 
 L<IO::Capture::Stdout>
-
-L<IO::Capture::ErrorMessages>
 
 =head1 AUTHORS
 

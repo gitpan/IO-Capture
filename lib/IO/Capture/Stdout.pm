@@ -39,7 +39,7 @@ sub _stop {
 
 IO::Capture::Stdout - Capture any output sent to STDOUT 
 
-=head1 SYNOPSYS
+=head1 SYNOPSIS
 
     # Generic example (Just to give the overall view)
     use IO::Capture::Stdout;
@@ -93,13 +93,6 @@ IO::Capture::Stdout - Capture any output sent to STDOUT
 
     $capture->stop();
 
-    # More useful example 2 - "Use with GUI like Tk"
-    #   If you are calling a CPAN module that may
-    # print some messages that you don't want going
-    # to the shell window, or being lost, you can 
-    # capture them and then put to a log file or
-    # print in a text frame
-
 
 
 =head1 DESCRIPTION
@@ -111,8 +104,8 @@ will be reset to the previous location. E.g., If previously redirected to a file
 C<IO::Capture-E<gt>stop> is called, output will start going into that file again.
 
 Note:  This module won't work with the perl function, system(), or any other operation 
-       involing a fork().  If you want to capture the output from a system command,
-       it is faster to use open() or backticks.  
+       involving a fork().  If you want to capture the output from a system command,
+       it is faster to use open() or back-ticks.  
 
        my $output = `/usr/sbin/ls -l 2>&1`;
 
@@ -279,9 +272,6 @@ L<IO::Capture::Overview>
 L<IO::Capture>
 
 L<IO::Capture::Stderr>
-
-L<IO::Capture::ErrorMessages>
-
 
 
 =head1 AUTHORS

@@ -1,5 +1,3 @@
-$VERSION = 0.02;
-
 =head1 NAME
 
 Overview of C<IO::Capture> Module, and classes derived from it. 
@@ -9,15 +7,15 @@ Overview of C<IO::Capture> Module, and classes derived from it.
 The modules in this distribution are designed to allow you to
 capture and process output sent to STDOUT and/or STDERR.  
 
-I initially created the modules to use in building module tests.  I 
+I initial created the modules to use in building module tests.  I 
 wanted to be able to intentionally cause errors, and insure the 
 module responded correctly.  E.g., Call a class method without a 
 required argument.  Using IO::Capture keeps the user from seeing 
 these intentional errors when running 'make test'.
 
-I have also found useful on occasion in Perl Tk apps, where I wanted
-to capture output from a Perl module I was using.  I could then 
-capture, then put the text into a log or message window.
+I have also found this useful on occasion in Perl Tk apps, where 
+I wanted to capture output from a Perl module I was using.  I could 
+then capture, then put the text into a log or message window.
 
 Note:  None of the modules currently distributed will capture from
 the 'system' Perl function, or the like.  It could be done, but 
@@ -49,18 +47,22 @@ Module to capture C<STDERR> from program.  See L<IO::Capture::Stderr>.
 
 =head2 IO::Capture::ErrorMessages
 
-Module to capture C<STDERR> with an added handler for C<SIG(__WARN__)>.
-See L<IO::Capture::ErrorMessages>.
+This method has been depreciated.  The only difference between this one and Stderr.pm
+was the trap for WARN.  I found it was fixed in 5.8 so just check in Stderr
+now.  I.e., Just use Stderr now. It (Stderr) will detect what version of
+perl you are using, and act accordingly.  The two (C<IO::Capture::ErrorMessages> and 
+C<IO::Capture::Stderr>) are currently identical, and C<IO::Capture::ErrorMessages> will
+be removed in a future release.
 
 If you would like to add features to any of these, or build your 
 own module using C<IO::Capture> as a base, read on.
 
 =head1 ADDING FEATURES 
 
-If one of these modules take care of your problem, install it and
+If one of these modules takes care of your problem, install it and
 have fun!  
 
-But lets say you would like to add a feature to one of the derived classes, 
+But let's say you would like to add a feature to one of the derived classes, 
 say IO::Capture::Stdout.  No need to re-write the whole module, just use it
 as the base, and write your one feature. Here is a somewhat simplified 
 example.
@@ -86,7 +88,7 @@ example.
 	for my $line (@$arrayref) {
 	    push @found_lines, $line if $line =~ /$string/;
 	}
-	return wantarray ? @found_lines : shift @found_lines;
+	return wantarray ? @found_lines : scalar(@found_lines);
     }
     1;
 
@@ -117,11 +119,11 @@ Results in
 =head1 WRITING YOUR OWN DERIVED CLASS
 
 Before starting your own sub-class, be sure to read through L<IO::Capture>.  Pay 
-special attention to the internal methods that are only defined as abstract 
+special attention to the internal methods that are only defined as I<abstract> 
 methods in C<IO::Capture>.  For examples, look at the sub-classes included with 
-this distribution. (C<IO::Capture::Stdout>, C<IO:Capture::Stderr>, 
-C<IO:Capture::ErrorMessages>)  You can start by copying one of these and using 
-it as a templet.  They have the required private methods defined already, and you 
+this distribution. (C<IO::Capture::Stdout>, C<IO:Capture::Stderr>.
+You can start by copying one of these and using 
+it as a template.  They have the required private methods defined already, and you 
 may very well be able to use them as is.  Change any methods, and add any new 
 ones, as needed.
 
@@ -188,19 +190,28 @@ Yes. You could do this easier by just using C<IO::Capture::Stderr> as the base a
 overriding C<_retrieve_captured_text> like in L<"ADDING FEATURES">, but hey, we 
 needed an easy example.  :-)
 
-=head1 AUTHORS
+If you want your class to have arguments that users can pass in, just use the default
+C<new()> method and have the arguments passed in as an anonymous array.  See the 
+C<IO::Capture::Stderr> module for an example.
+
+=head1 BUGS
+
+Please report bugs on http://rt.cpan.org/
+
+=head1 CREDITS
+
+Special thanks to  James E Keenan for many bug fixes and tests he provided.
+
+=head1 AUTHOR
 
 Mark Reynolds
 reynolds<at>sgi.com
-
-Jon Morgan
-jmorgan<at>sgi.com
 
 Note: C<Change <at> to 'at' sign.>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2003, Mark Reynolds. All Rights Reserved.
+Copyright (c) 2003-2005, Mark Reynolds. All Rights Reserved.
 This module is free software. It may be used, redistributed
 and/or modified under the same terms as Perl itself.
 

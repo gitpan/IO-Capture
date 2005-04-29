@@ -8,3 +8,11 @@ Bug list for IO::Capture
 	Fixed in .03
 3) Line pointer wrong if read() is called in scalar context, 
    then called a 2nd time in scalar.
+4) rt.cpan.org bug numbers 9483, and 7261.  printf not working
+        Fixed in .04
+5) IO::Capture::Stderr will capture messages from warn() in Perl 
+   5.8 and higher, but not in lower than 5.8.  (This was the
+   reason I added IO::Capture::ErrorMessages at the beginning.)
+   Added a check and do:
+
+        $SIG{__WARN__} = sub {print STDERR @_;} 

@@ -1,6 +1,6 @@
 package IO::Capture;
 
-$VERSION = 0.03;
+$VERSION = 0.04;
 use strict;
 use Carp;
 
@@ -13,8 +13,12 @@ C<IO::Capture> - Abstract Base Class to build modules to capture output.
 The C<IO::Capture> Module defines an abstract base class that can be
 used to build modules that capture output being sent on a filehandle 
 such as STDOUT or STDERR.
-  Several modules that come with the distribution, do just that.  
-(I.e., Capture STDOUT and STDERR)  See L<IO::Capture::Overview> for a 
+
+Several modules that come with the distribution do just that.  
+I.e., Capture STDOUT and STDERR.   Also see James Keenan's 
+C<IO::Capture::Stdout::Extended> on CPAN.
+
+See L<IO::Capture::Overview> for a 
 discussion of these modules and examples of how to build a module to 
 sub-class from C<IO::Capture> yourself.   If after reading the overview, 
 you would like to build a class from C<IO::Capture>, look here for 
@@ -45,8 +49,17 @@ The C<new> method creates a new C<IO::Capture> object, and returns it
 to its caller.  The object is implemented with a hash.  Each key used by 
 C<IO::Capture> is named with the class name.  I.e., 'IO::Capture::<key_name>'.  
 This is to prevent name clashes with keys added by sub-class authors.
-The internal methods used are:
+Attributes can be set in the object by passing a hash reference as a single 
+argument to new().
 
+    my $capture = IO::Capture->new( { Key => 'value' } );
+
+All elements from this hash will be added to the object, and will be 
+available for use by children of IO::Capture.
+
+    my $key = $self->{'Key'};
+
+The internal methods used are:
 
 =over 4
 
@@ -105,12 +118,24 @@ C<STDERR>, C<STDOUT>, and $SIG{__WARN__}.  They are saved in the hash
 keys 'IO::Capture::stderr_save', 'IO::Capture::stdout_save', and 
 'IO::Capture::handler_save'. 
 
+    # Save WARN handler
     $self->{'IO::Capture::handler_save'} = $SIG{__WARN__};
-    $self->{'IO::Capture::stdout_save'} = *STDOUT;
-    $self->{'IO::Capture::stderr_save'} = *STDERR;
+    # Dup stdout
+    open STDOUT_SAVE, ">&STDOUT";
+    # Save ref to dup
+    $self->{'IO::Capture::stdout_save'} = *STDOUT_SAVE;
+    # Dup stderr
+    open STDERR_SAVE, ">&STDOUT";
+    # Save ref to dup
+    $self->{'IO::Capture::stderr_save'} = *STDERR_SAVE;
+
 
 These saved values can be used in the C<_stop> method to restore the
-original value to any you changed.  See C<_stop> for examples.
+original value to any you changed.  
+    
+    $SIG{__WARN__} = $self->{'IO::Capture::handler_save'};
+    STDOUT = $self->{'IO::Capture::stdout_save'};
+    STDERR = $self->{'IO::Capture::stderr_save'};
 
 B<Must> return a boolean true for success, or false for failure.  
 If a failure is indicated, an C<undef> will be returned to the
@@ -223,20 +248,23 @@ L<IO::Capture::Stdout>
 
 L<IO::Capture::Stderr>
 
-L<IO::Capture::ErrorMessages>
-
 =head1 AUTHORS
 
 Mark Reynolds
-reynolds@sgi.com
+reynolds<at>sgi.com
 
 Jon Morgan
-jmorgan@sgi.com
+jmorgan<at>sgi.com
+
+=head1 MAINTAINED
+
+Maintained by Mark Reynolds. reynolds<at>sgi.com
 
 =head1 COPYRIGHT
 
-Copyright (c) 2003, Mark Reynolds and Jon Morgan.  All Rights Reserved.
-This module is free software.  It may be used, redistributed
+Copyright (c) 2003      Mark Reynolds and Jon Morgan
+Copyright (c) 2004-2005 Mark Reynolds
+All Rights Reserved.  This module is free software.  It may be used, redistributed
 and/or modified under the same terms as Perl itself.
 
 =cut
@@ -245,10 +273,10 @@ and/or modified under the same terms as Perl itself.
 sub new {
     my $class = shift;
     if (ref $class) {
-	carp "WARNING: _initialize was called, but not called from a valid object";
-	return;
+		carp "WARNING: " . __PACKAGE__ . "::new cannot be called from existing object. (cloned)";
+		return;
     }
-    my $object = {};
+    my $object = shift || {};
     bless $object, $class;
     $object->_initialize; 
 }
@@ -266,6 +294,10 @@ sub _check_pre_conditions {
 
 sub _initialize {
     my $self = shift;
+    if (!ref $self) {
+	carp "WARNING: _initialize was called, but not called from a valid object";
+	return;
+    }
 
         $self->{'IO::Capture::messages'} = [];
         $self->{'IO::Capture::line_pointer'} = 1;
@@ -344,7 +376,6 @@ sub _read {
 	}
 
     return if $$line_pointer > @$messages;
-    #return wantarray ? @$messages :  shift @{$messages};
 	return wantarray ? @$messages :  $messages->[($$line_pointer++)-1];
 }
 
@@ -356,8 +387,10 @@ sub _retrieve_captured_text {
 sub _save_current_configuration {
     my $self = shift;
     $self->{'IO::Capture::handler_save'} = $SIG{__WARN__};
-    $self->{'IO::Capture::stdout_save'} = *STDOUT;
-    $self->{'IO::Capture::stderr_save'} = *STDERR;
+    open STDOUT_SAVE, ">&STDOUT";
+    $self->{'IO::Capture::stdout_save'} = *STDOUT_SAVE;
+    open STDERR_SAVE, ">&STDOUT";
+    $self->{'IO::Capture::stderr_save'} = *STDERR_SAVE;
     return $self; 
 }
 

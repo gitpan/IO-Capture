@@ -1,14 +1,12 @@
 # vim600: set syn=perl :
 use strict;
-use Test::More tests => 4;
+use Test::More tests => 3;
 
 use IO::Capture::Stdout;
 use IO::Capture::Stderr;
-use IO::Capture::ErrorMessages;
 
 my $out_capture = IO::Capture::Stdout->new();
 my $err_capture = IO::Capture::Stderr->new();
-my $message_capture = IO::Capture::ErrorMessages->new();
 
 # Test for bug number 1
 $err_capture->start();
@@ -23,7 +21,7 @@ ok(!$err_capture->read(), "Test for no error if empty");
 #
 
 our $module;
-for $module (qw/Stderr ErrorMessages Stdout/) {
+for $module (qw/Stderr Stdout/) {
 	no strict 'refs';
 	my $module_name = "IO::Capture::$module";
     my $capture = $module_name->new();

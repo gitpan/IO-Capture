@@ -1,5 +1,8 @@
 # vim600: set syn=perl :
-use Test::More tests => 12;
+use strict;
+use warnings;
+use Test::More tests => 15;
+
 BEGIN { use_ok('IO::Capture::Stderr') };
 
 #Save initial values
@@ -83,3 +86,19 @@ ok ($initial_stderr_dev == $ending_stderr_dev, "Invariant Check - STDERR filesys
 
 #Test 12
 ok ($initial_stderr_inum == $ending_stderr_inum, "Invariant Check - STDERR inode number");
+
+#Test 13
+# make sure $SIG{__WARN__} is not set. I.e., It was not left in an odd state
+cmp_ok ( $SIG{__WARN__}, 'eq', '', "warn back to DEFAULT");
+
+#Test 14
+my $warn_handler = sub {print STDERR "Custom warn handler in effect\n"};
+$SIG{__WARN__} = $warn_handler;
+$capture->start();
+warn "Warn test 1";
+$capture->stop();
+my $warn_out = $capture->read();
+cmp_ok( $warn_out, '=~', "Custom warn handler", "Verify custom handler not overridden" );
+
+#Test 15
+cmp_ok( $SIG{__WARN__}, "==", $warn_handler, "Restore warn handler");
