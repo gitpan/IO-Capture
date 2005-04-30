@@ -16,3 +16,7 @@ Bug list for IO::Capture
    Added a check and do:
 
         $SIG{__WARN__} = sub {print STDERR @_;} 
+
+6) If $SIG{__WARN__} has a handler set by the program, in versions
+   older that 5.8, the IO::Capture::Stderr will capture warn() text
+   even without FORCE_CAPTURE_WARN being set.  Fixed in Version 0.05

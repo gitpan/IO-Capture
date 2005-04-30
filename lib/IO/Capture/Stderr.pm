@@ -96,7 +96,7 @@ sub _stop {
 sub _capture_warn_check {
 	my $self = shift;
 
-	if (defined $SIG{__WARN__} ) {
+	if (!defined $SIG{__WARN__} ) {
 		return $^V lt v5.8 ? 1 : 0;
 	}
 	return $self->{'FORCE_CAPTURE_WARN'} ? 1 : 0;
